@@ -56,6 +56,23 @@ export async function fetchVideoPrediction(file) {
   }
 }
 
+export async function fetchFramePrediction(file) {
+  const imageData = new FormData();
+  imageData.append('file', file);
+
+  try {
+    const response = await fetch(`${IMAGE_BASE_URL}/predict-frame`, {
+      method: 'POST',
+      body: imageData,
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error analyzing video frame:', error);
+    return { error: "Frame server request failed." };
+  }
+}
+
 export async function saveCorrection(file, correctLabel, prediction) {
   const formData = new FormData();
   formData.append('file', file);
