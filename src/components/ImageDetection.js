@@ -55,6 +55,19 @@ function translateConfidence(confidence) {
   return labels[confidence] || confidence || "-";
 }
 
+function getModelLabel(modelKey) {
+  const labels = {
+    sd: "SD",
+    mj: "MJ v6",
+    bg: "BG",
+    sd3: "SD3",
+    sdxl: "SDXL",
+    dalle3: "DALL-E 3",
+  };
+
+  return labels[modelKey] || modelKey;
+}
+
 function ImageDetection() {
   const fileInputRef = useRef(null);
   const [result, setResult] = useState(null);
@@ -202,9 +215,9 @@ function ImageDetection() {
                         <div className="info-box modal-info">
                           <p><span>{T.filename}</span><strong>{result.filename || fileName || "-"}</strong></p>
                           <p><span>{T.confidence}</span><strong>{translateConfidence(result.confidence)}</strong></p>
-                          <p><span>SD</span><strong>{result.model_probs?.sd ?? "-"}</strong></p>
-                          <p><span>MJ</span><strong>{result.model_probs?.mj ?? "-"}</strong></p>
-                          <p><span>BG</span><strong>{result.model_probs?.bg ?? "-"}</strong></p>
+                          {Object.entries(result.model_probs || {}).map(([modelKey, prob]) => (
+                            <p key={modelKey}><span>{getModelLabel(modelKey)}</span><strong>{prob}</strong></p>
+                          ))}
                           <p><span>{T.modelFusion}</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
                           <p><span>{T.disagreement}</span><strong>{result.signals?.model_disagreement ?? "-"}</strong></p>
                         </div>
