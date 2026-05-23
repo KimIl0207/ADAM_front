@@ -27,6 +27,9 @@ const T = {
   confidence: "\uc2e0\ub8b0\ub3c4",
   modelFusion: "\ubaa8\ub378 \ud569\uc131 \uc810\uc218",
   disagreement: "\ubaa8\ub378 \ubd88\uc77c\uce58\ub3c4",
+  sdxlSpike: "SDXL \uac15\ubc18\uc751",
+  detected: "\uac10\uc9c0",
+  notDetected: "\ubbf8\uac10\uc9c0",
   heatmap: "Grad-CAM \ud788\ud2b8\ub9f5",
   model: "\ubaa8\ub378",
   correctionTitle: "\uc608\uce21\uc774 \ud2c0\ub838\ub2e4\uba74 \uc815\ub2f5\uc744 \uc800\uc7a5\ud574 \uc8fc\uc138\uc694.",
@@ -220,6 +223,7 @@ function ImageDetection() {
                           ))}
                           <p><span>{T.modelFusion}</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
                           <p><span>{T.disagreement}</span><strong>{result.signals?.model_disagreement ?? "-"}</strong></p>
+                          <p><span>{T.sdxlSpike}</span><strong>{result.signals?.sdxl_spike ? T.detected : T.notDetected}</strong></p>
                         </div>
 
                         {result.grad_cam?.image_base64 && (
