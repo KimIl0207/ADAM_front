@@ -8,6 +8,7 @@ import './App.css';
 
 function App() {
   console.log("API Base URL:", getApiBaseUrl());
+  const subtitle = "\uc774\ubbf8\uc9c0\uc640 \ud14d\uc2a4\ud2b8\ub97c \ud604\uc7ac \u0041\u0049 \ud0d0\uc9c0 \uc11c\ubc84\ub85c \ubd84\uc11d\ud574 \ubcf4\uc138\uc694.";
 
   return (
     <div className="app" id="top">
@@ -16,7 +17,7 @@ function App() {
 
         <main>
           <h1 className="title">AI Detector</h1>
-          <p className="subtitle">Test images and text against the current AI detection servers.</p>
+          <p className="subtitle">{subtitle}</p>
 
           <section id="image-detection">
             <ImageDetection />

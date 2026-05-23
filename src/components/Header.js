@@ -1,4 +1,6 @@
 function Header() {
+  const primaryNavigation = "\uae30\ubcf8 \ud0d0\uc0c9";
+
   return (
     <header className="site-header">
       <a href="#top" className="brand" aria-label="AI Detector home">
@@ -6,7 +8,7 @@ function Header() {
         <span className="brand-name">AI Detector</span>
       </a>
 
-      <nav className="nav-menu" aria-label="Primary navigation">
+      <nav className="nav-menu" aria-label={primaryNavigation}>
         <a href="#image-detection">Image</a>
         <a href="#video-detection">Video</a>
         <a href="#text-detection">Text</a>

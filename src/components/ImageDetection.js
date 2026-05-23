@@ -1,6 +1,58 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchPrediction, saveCorrection } from '../api/detectionApi';
 
+const T = {
+  aiSuspicious: "\u0041\u0049 \uc0dd\uc131 \uc758\uc2ec \uc774\ubbf8\uc9c0",
+  likelyReal: "\uc2e4\uc81c \uc774\ubbf8\uc9c0 \uac00\ub2a5\uc131 \ub192\uc74c",
+  aiImage: "\u0041\u0049 \uc0dd\uc131 \uc774\ubbf8\uc9c0",
+  realImage: "\uc2e4\uc81c \uc774\ubbf8\uc9c0",
+  high: "\ub192\uc74c",
+  medium: "\ubcf4\ud1b5",
+  low: "\ub0ae\uc74c",
+  imageOnly: "\uc774\ubbf8\uc9c0 \ud30c\uc77c\ub9cc \uc5c5\ub85c\ub4dc\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+  saved: "\ub85c \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4.",
+  saveFailed: "\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.",
+  selectImage: "\uc774\ubbf8\uc9c0 \uc120\ud0dd",
+  pasteHint: "\ubcf5\uc0ac\ud55c \uc2a4\ud06c\ub9b0\uc0f7\uc774\ub098 \uc774\ubbf8\uc9c0\ub97c Ctrl+V\ub85c \ubd99\uc5ec\ub123\uc744 \uc218\ub3c4 \uc788\uc2b5\ub2c8\ub2e4.",
+  analyzing: "\ubd84\uc11d \uc911...",
+  uploadAnalyze: "\uc5c5\ub85c\ub4dc \ud6c4 \ubd84\uc11d",
+  preview: "\ubbf8\ub9ac\ubcf4\uae30",
+  uploadedImage: "\uc5c5\ub85c\ub4dc\ud55c \uc774\ubbf8\uc9c0",
+  resultTitle: "\uc774\ubbf8\uc9c0 \ubd84\uc11d \uacb0\uacfc",
+  error: "\uc624\ub958",
+  suspiciousScore: "\uc758\uc2ec \uc810\uc218",
+  filename: "\ud30c\uc77c\uba85",
+  confidence: "\uc2e0\ub8b0\ub3c4",
+  modelFusion: "\ubaa8\ub378 \ud569\uc131 \uc810\uc218",
+  disagreement: "\ubaa8\ub378 \ubd88\uc77c\uce58\ub3c4",
+  heatmap: "Grad-CAM \ud788\ud2b8\ub9f5",
+  model: "\ubaa8\ub378",
+  correctionTitle: "\uc608\uce21\uc774 \ud2c0\ub838\ub2e4\uba74 \uc815\ub2f5\uc744 \uc800\uc7a5\ud574 \uc8fc\uc138\uc694.",
+  saveReal: "\uc2e4\uc81c \uc774\ubbf8\uc9c0\ub85c \uc800\uc7a5",
+  saveAi: "\u0041\u0049 \uc774\ubbf8\uc9c0\ub85c \uc800\uc7a5",
+};
+
+function translateImageLabel(label) {
+  const labels = {
+    "Suspicious AI-like Image": T.aiSuspicious,
+    "Likely Real Image": T.likelyReal,
+    "AI Generated": T.aiImage,
+    "Real Image": T.realImage,
+  };
+
+  return labels[label] || label || "-";
+}
+
+function translateConfidence(confidence) {
+  const labels = {
+    high: T.high,
+    medium: T.medium,
+    low: T.low,
+  };
+
+  return labels[confidence] || confidence || "-";
+}
+
 function ImageDetection() {
   const fileInputRef = useRef(null);
   const [result, setResult] = useState(null);
@@ -20,7 +72,7 @@ function ImageDetection() {
     if (!file) return;
 
     if (file.type && !file.type.startsWith('image/')) {
-      setResult({ error: "Invalid file type. Please upload an image." });
+      setResult({ error: T.imageOnly });
       return;
     }
 
@@ -72,9 +124,9 @@ function ImageDetection() {
     const data = await saveCorrection(selectedFile, label, result);
 
     if (data?.success) {
-      setSaveMessage(`${label === "real" ? "Real photo" : "AI image"} saved.`);
+      setSaveMessage(`${label === "real" ? T.realImage : T.aiImage}${T.saved}`);
     } else {
-      setSaveMessage("Save failed.");
+      setSaveMessage(T.saveFailed);
     }
   };
 
@@ -83,7 +135,7 @@ function ImageDetection() {
       <div className="card upload-card">
         <h2>Image Detection</h2>
         <label htmlFor="fileInput" className="file-label">
-          Select image
+          {T.selectImage}
         </label>
         <input
           ref={fileInputRef}
@@ -93,11 +145,11 @@ function ImageDetection() {
           className="file-input"
           onChange={handleFileChange}
         />
-        <p className="paste-hint">You can also paste a copied screenshot or image with Ctrl+V.</p>
+        <p className="paste-hint">{T.pasteHint}</p>
         {fileName && <p className="file-name">{fileName}</p>}
 
         <button className="primary-btn" onClick={handleUpload} disabled={loading || !selectedFile}>
-          {loading ? "Analyzing..." : "Upload and analyze"}
+          {loading ? T.analyzing : T.uploadAnalyze}
         </button>
       </div>
 
@@ -105,61 +157,61 @@ function ImageDetection() {
         <div className="content-grid">
           {imageUrl && (
             <div className="card preview-card">
-              <h2>Preview</h2>
-              <img src={imageUrl} alt="Uploaded" className="preview-image" />
+              <h2>{T.preview}</h2>
+              <img src={imageUrl} alt={T.uploadedImage} className="preview-image" />
             </div>
           )}
 
           {result && (
             <div className="card result-card">
-              <h2>Image Result</h2>
+              <h2>{T.resultTitle}</h2>
 
               {result.error ? (
-                <p className="error-text">Error: {result.error}</p>
+                <p className="error-text">{T.error}: {result.error}</p>
               ) : (
                 <>
                   <div className="result-main">
-                    <div className="result-badge">{result.label}</div>
+                    <div className="result-badge">{translateImageLabel(result.label)}</div>
                     <div className="result-prob">
-                      Suspicious Score: <strong>{result.suspicious_score ?? "-"}</strong>
+                      {T.suspiciousScore}: <strong>{result.suspicious_score ?? "-"}</strong>
                     </div>
                   </div>
 
                   <div className="info-box">
-                    <p><span>Filename</span><strong>{result.filename || fileName || "-"}</strong></p>
-                    <p><span>Confidence</span><strong>{result.confidence || "-"}</strong></p>
+                    <p><span>{T.filename}</span><strong>{result.filename || fileName || "-"}</strong></p>
+                    <p><span>{T.confidence}</span><strong>{translateConfidence(result.confidence)}</strong></p>
                     <p><span>SD</span><strong>{result.model_probs?.sd ?? "-"}</strong></p>
                     <p><span>MJ</span><strong>{result.model_probs?.mj ?? "-"}</strong></p>
                     <p><span>BG</span><strong>{result.model_probs?.bg ?? "-"}</strong></p>
-                    <p><span>Model Fusion</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
-                    <p><span>Disagreement</span><strong>{result.signals?.model_disagreement ?? "-"}</strong></p>
+                    <p><span>{T.modelFusion}</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
+                    <p><span>{T.disagreement}</span><strong>{result.signals?.model_disagreement ?? "-"}</strong></p>
                     {result.grad_cam?.image_base64 && (
                       <div className="grad-cam-box">
                         <h3>Grad-CAM</h3>
                         <img
                           src={`data:image/png;base64,${result.grad_cam.image_base64}`}
-                          alt="Grad-CAM heatmap"
+                          alt={T.heatmap}
                           className="preview-image"
                         />
-                        <p>Model : {result.grad_cam.model || "-"}</p>
+                        <p>{T.model}: {result.grad_cam.model || "-"}</p>
                       </div>
                     )}
                   </div>
 
                   <div className="correction-box">
-                    <p className="correction-title">Save correction if the prediction is wrong</p>
+                    <p className="correction-title">{T.correctionTitle}</p>
                     <div className="button-row">
                       <button
                         className="secondary-btn"
                         onClick={() => handleSaveCorrection("real")}
                       >
-                        Save as real
+                        {T.saveReal}
                       </button>
                       <button
                         className="danger-btn"
                         onClick={() => handleSaveCorrection("fake")}
                       >
-                        Save as AI
+                        {T.saveAi}
                       </button>
                     </div>
 

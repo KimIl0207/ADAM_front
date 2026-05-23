@@ -4,6 +4,46 @@ import { fetchFramePrediction } from '../api/detectionApi';
 const MAX_ANALYSIS_SECONDS = 5;
 const FRAME_INTERVAL_SECONDS = 1;
 
+const T = {
+  aiSuspicious: "\u0041\u0049 \uc0dd\uc131 \uc758\uc2ec \ub3d9\uc601\uc0c1",
+  likelyReal: "\uc2e4\uc81c \ub3d9\uc601\uc0c1 \uac00\ub2a5\uc131 \ub192\uc74c",
+  aiVideo: "\u0041\u0049 \uc0dd\uc131 \ub3d9\uc601\uc0c1",
+  realVideo: "\uc2e4\uc81c \ub3d9\uc601\uc0c1",
+  seekFailed: "\ub3d9\uc601\uc0c1 \uc704\uce58\ub97c \uc774\ub3d9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.",
+  frameImageFailed: "\ud504\ub808\uc784 \uc774\ubbf8\uc9c0\ub97c \ub9cc\ub4e4 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.",
+  metadataFailed: "\ub3d9\uc601\uc0c1 \uc815\ubcf4\ub97c \ubd88\ub7ec\uc62c \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.",
+  frameDataFailed: "\ub3d9\uc601\uc0c1 \ud504\ub808\uc784\uc744 \ubd88\ub7ec\uc62c \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.",
+  canvasFailed: "\ud504\ub808\uc784 \uce94\ubc84\uc2a4\ub97c \ub9cc\ub4e4 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.",
+  extracting: "\ud504\ub808\uc784 \ucd94\ucd9c \uc911",
+  videoOnly: "\ub3d9\uc601\uc0c1 \ud30c\uc77c\ub9cc \uc5c5\ub85c\ub4dc\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+  preparing: "\ub3d9\uc601\uc0c1 \uc900\ube44 \uc911",
+  loadingMetadata: "\ub3d9\uc601\uc0c1 \uc815\ubcf4\ub97c \ubd88\ub7ec\uc624\ub294 \uc911",
+  analyzingFrames: "\ud504\ub808\uc784 \ubd84\uc11d \uc911",
+  complete: "\uc644\ub8cc",
+  framesAnalyzed: "\uac1c \ud504\ub808\uc784 \ubd84\uc11d \uc644\ub8cc",
+  analysisFailed: "\ub3d9\uc601\uc0c1 \ud504\ub808\uc784 \ubd84\uc11d\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.",
+  selectVideo: "\ub3d9\uc601\uc0c1 \uc120\ud0dd",
+  analyzing: "\ubd84\uc11d \uc911...",
+  uploadAnalyze: "\uc5c5\ub85c\ub4dc \ud6c4 \ub3d9\uc601\uc0c1 \ubd84\uc11d",
+  preview: "\ub3d9\uc601\uc0c1 \ubbf8\ub9ac\ubcf4\uae30",
+  resultTitle: "\ub3d9\uc601\uc0c1 \ubd84\uc11d \uacb0\uacfc",
+  error: "\uc624\ub958",
+  suspiciousScore: "\uc758\uc2ec \uc810\uc218",
+  analyzedFrames: "\ubd84\uc11d \ud504\ub808\uc784 \uc218",
+  frameScores: "\ud504\ub808\uc784\ubcc4 \uc810\uc218",
+};
+
+function translateVideoLabel(label) {
+  const labels = {
+    "Suspicious AI-like Video": T.aiSuspicious,
+    "Likely Real Video": T.likelyReal,
+    "AI Generated Video": T.aiVideo,
+    "Real Video": T.realVideo,
+  };
+
+  return labels[label] || label || "-";
+}
+
 function seekVideo(video, time) {
   return new Promise((resolve, reject) => {
     if (Math.abs(video.currentTime - time) < 0.01 && video.readyState >= 2) {
@@ -17,7 +57,7 @@ function seekVideo(video, time) {
     };
     const handleError = () => {
       cleanup();
-      reject(new Error("Could not seek video."));
+      reject(new Error(T.seekFailed));
     };
     const cleanup = () => {
       video.removeEventListener('seeked', handleSeeked);
@@ -36,7 +76,7 @@ function canvasToBlob(canvas) {
       if (blob) {
         resolve(blob);
       } else {
-        reject(new Error("Could not create frame image."));
+        reject(new Error(T.frameImageFailed));
       }
     }, 'image/jpeg', 0.9);
   });
@@ -52,13 +92,13 @@ async function extractVideoFrames(file, onProgress) {
   try {
     await new Promise((resolve, reject) => {
       video.onloadedmetadata = resolve;
-      video.onerror = () => reject(new Error("Could not load video metadata."));
+      video.onerror = () => reject(new Error(T.metadataFailed));
     });
 
     if (!video.videoWidth || !video.videoHeight) {
       await new Promise((resolve, reject) => {
         video.onloadeddata = resolve;
-        video.onerror = () => reject(new Error("Could not load video frame data."));
+        video.onerror = () => reject(new Error(T.frameDataFailed));
       });
     }
 
@@ -76,14 +116,14 @@ async function extractVideoFrames(file, onProgress) {
     canvas.height = video.videoHeight;
     const context = canvas.getContext('2d');
     if (!context) {
-      throw new Error("Could not create frame canvas.");
+      throw new Error(T.canvasFailed);
     }
     const frames = [];
 
     for (let index = 0; index < frameTimes.length; index += 1) {
       const time = Math.min(frameTimes[index], Math.max(video.duration - 0.05, 0));
       onProgress({
-        stage: "Extracting frames",
+        stage: T.extracting,
         detail: `${index + 1} / ${frameTimes.length}`,
         percent: Math.round(((index + 1) / frameTimes.length) * 40),
       });
@@ -119,7 +159,7 @@ function VideoDetection() {
     if (!file) return;
 
     if (file.type && !file.type.startsWith('video/')) {
-      setVideoResult({ error: "Invalid file type. Please upload a video." });
+      setVideoResult({ error: T.videoOnly });
       return;
     }
 
@@ -140,8 +180,8 @@ function VideoDetection() {
     setVideoLoading(true);
     setVideoResult(null);
     setProgress({
-      stage: "Preparing video",
-      detail: "Loading metadata",
+      stage: T.preparing,
+      detail: T.loadingMetadata,
       percent: 5,
     });
 
@@ -151,7 +191,7 @@ function VideoDetection() {
 
       for (let index = 0; index < frames.length; index += 1) {
         setProgress({
-          stage: "Analyzing frames",
+          stage: T.analyzingFrames,
           detail: `${index + 1} / ${frames.length}`,
           percent: 40 + Math.round(((index + 1) / frames.length) * 55),
         });
@@ -173,13 +213,13 @@ function VideoDetection() {
         frame_predictions: frameScores.map((value) => Number(value.toFixed(4))),
       });
       setProgress({
-        stage: "Complete",
-        detail: `${frames.length} frames analyzed`,
+        stage: T.complete,
+        detail: `${frames.length}${T.framesAnalyzed}`,
         percent: 100,
       });
     } catch (error) {
       console.error('Error analyzing video frames:', error);
-      setVideoResult({ error: "Video frame analysis failed." });
+      setVideoResult({ error: T.analysisFailed });
       setProgress(null);
     } finally {
       setVideoLoading(false);
@@ -191,7 +231,7 @@ function VideoDetection() {
       <div className="card video-card">
         <h2>Video Detection</h2>
         <label htmlFor="videoInput" className="file-label">
-          Select video
+          {T.selectVideo}
         </label>
         <input
           ref={videoInputRef}
@@ -204,7 +244,7 @@ function VideoDetection() {
         {videoFileName && <p className="file-name">{videoFileName}</p>}
 
         <button className="primary-btn" onClick={handleVideoUpload} disabled={videoLoading || !selectedVideoFile}>
-          {videoLoading ? "Analyzing..." : "Upload and analyze video"}
+          {videoLoading ? T.analyzing : T.uploadAnalyze}
         </button>
 
         {progress && (
@@ -225,30 +265,30 @@ function VideoDetection() {
         <div className="content-grid">
           {videoUrl && (
             <div className="card preview-card">
-              <h2>Video Preview</h2>
+              <h2>{T.preview}</h2>
               <video src={videoUrl} className="preview-video" controls />
             </div>
           )}
 
           {videoResult && (
             <div className="card result-card">
-              <h2>Video Result</h2>
+              <h2>{T.resultTitle}</h2>
 
               {videoResult.error ? (
-                <p className="error-text">Error: {videoResult.error}</p>
+                <p className="error-text">{T.error}: {videoResult.error}</p>
               ) : (
                 <>
                   <div className="result-main">
-                    <div className="result-badge">{videoResult.label || videoResult.prediction}</div>
+                    <div className="result-badge">{translateVideoLabel(videoResult.label || videoResult.prediction)}</div>
                     <div className="result-prob">
-                      Suspicious Score: <strong>{videoResult.suspicious_score ?? "-"}</strong>
+                      {T.suspiciousScore}: <strong>{videoResult.suspicious_score ?? "-"}</strong>
                     </div>
                   </div>
 
                   <div className="info-box">
-                    <p><span>Analyzed Frames</span><strong>{videoResult.frame_count ?? videoResult.frame_predictions?.length ?? "-"}</strong></p>
-                    <p><span>Frame Scores</span><strong>{videoResult.frame_predictions?.join(", ") || "-"}</strong></p>
-                    <p><span>Suspicious Score</span><strong>{videoResult.suspicious_score ?? "-"}</strong></p>
+                    <p><span>{T.analyzedFrames}</span><strong>{videoResult.frame_count ?? videoResult.frame_predictions?.length ?? "-"}</strong></p>
+                    <p><span>{T.frameScores}</span><strong>{videoResult.frame_predictions?.join(", ") || "-"}</strong></p>
+                    <p><span>{T.suspiciousScore}</span><strong>{videoResult.suspicious_score ?? "-"}</strong></p>
                   </div>
                 </>
               )}
