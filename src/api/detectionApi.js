@@ -61,7 +61,11 @@ export async function fetchFramePrediction(file) {
   imageData.append('file', file);
 
   try {
+<<<<<<< HEAD
     const response = await fetch(`${IMAGE_BASE_URL}/predict-frame`, {
+=======
+    const response = await fetch(`${IMAGE_BASE_URL}/predict`, {
+>>>>>>> 963d0a3 (리턴값 수정)
       method: 'POST',
       body: imageData,
     });
@@ -85,11 +89,19 @@ export async function saveCorrection(file, correctLabel, prediction) {
   };
 
   appendIfPresent('predicted_label', prediction?.label);
+<<<<<<< HEAD
   appendIfPresent('predicted_probability', prediction?.probability);
   appendIfPresent('selected_generator_model', prediction?.generator_model);
   appendIfPresent('sd_prob', prediction?.probs?.sd);
   appendIfPresent('mj_prob', prediction?.probs?.mj);
   appendIfPresent('bg_prob', prediction?.probs?.bg);
+=======
+  appendIfPresent('predicted_probability', prediction?.suspicious_score);
+  appendIfPresent('selected_generator_model', prediction?.grad_cam?.model);
+  appendIfPresent('sd_prob', prediction?.model_probs?.sd);
+  appendIfPresent('mj_prob', prediction?.model_probs?.mj);
+  appendIfPresent('bg_prob', prediction?.model_probs?.bg);
+>>>>>>> 963d0a3 (리턴값 수정)
 
   try {
     const response = await fetch(`${IMAGE_BASE_URL}/save-correction`, {

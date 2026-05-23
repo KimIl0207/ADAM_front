@@ -121,15 +121,29 @@ function ImageDetection() {
                   <div className="result-main">
                     <div className="result-badge">{result.label}</div>
                     <div className="result-prob">
+<<<<<<< HEAD
                       Probability: <strong>{result.probability}</strong>
+=======
+                      Suspicious Score: <strong>{result.suspicious_score ?? "-"}</strong>
+>>>>>>> 963d0a3 (리턴값 수정)
                     </div>
                   </div>
 
                   <div className="info-box">
+<<<<<<< HEAD
                     <p><span>Predicted Model</span><strong>{result.generator_model || "-"}</strong></p>
                     <p><span>SD</span><strong>{result.probs?.sd ?? "-"}</strong></p>
                     <p><span>MJ</span><strong>{result.probs?.mj ?? "-"}</strong></p>
                     <p><span>BG</span><strong>{result.probs?.bg ?? "-"}</strong></p>
+=======
+                    <p><span>Filename</span><strong>{result.filename || fileName || "-"}</strong></p>
+                    <p><span>Confidence</span><strong>{result.confidence || "-"}</strong></p>
+                    <p><span>SD</span><strong>{result.model_probs?.sd ?? "-"}</strong></p>
+                    <p><span>MJ</span><strong>{result.model_probs?.mj ?? "-"}</strong></p>
+                    <p><span>BG</span><strong>{result.model_probs?.bg ?? "-"}</strong></p>
+                    <p><span>Model Fusion</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
+                    <p><span>Disagreement</span><strong>{result.signals?.model_disagreement ?? "-"}</strong></p>
+>>>>>>> 963d0a3 (리턴값 수정)
                     {result.grad_cam?.image_base64 && (
                       <div className="grad-cam-box">
                         <h3>Grad-CAM</h3>
