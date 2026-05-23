@@ -21,6 +21,8 @@ const T = {
   resultTitle: "\uc774\ubbf8\uc9c0 \ubd84\uc11d \uacb0\uacfc",
   error: "\uc624\ub958",
   suspiciousScore: "\uc758\uc2ec \uc810\uc218",
+  detailedInfo: "\uc0c1\uc138 \uc815\ubcf4",
+  close: "\ub2eb\uae30",
   filename: "\ud30c\uc77c\uba85",
   confidence: "\uc2e0\ub8b0\ub3c4",
   modelFusion: "\ubaa8\ub378 \ud569\uc131 \uc810\uc218",
@@ -61,6 +63,7 @@ function ImageDetection() {
   const [saveMessage, setSaveMessage] = useState("");
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (!imageUrl) return undefined;
@@ -81,6 +84,7 @@ function ImageDetection() {
     setImageUrl(URL.createObjectURL(file));
     setSaveMessage("");
     setResult(null);
+    setDetailsOpen(false);
   }, []);
 
   useEffect(() => {
@@ -112,11 +116,16 @@ function ImageDetection() {
     setSaveMessage("");
     setLoading(true);
     setResult(null);
+    setDetailsOpen(false);
 
     const data = await fetchPrediction(selectedFile);
     setResult(data);
     setLoading(false);
   };
+
+  const scorePercent = result?.suspicious_score !== undefined
+    ? Math.round(result.suspicious_score * 100)
+    : null;
 
   const handleSaveCorrection = async (label) => {
     if (!selectedFile) return;
@@ -172,51 +181,68 @@ function ImageDetection() {
                 <>
                   <div className="result-main">
                     <div className="result-badge">{translateImageLabel(result.label)}</div>
-                    <div className="result-prob">
-                      {T.suspiciousScore}: <strong>{result.suspicious_score ?? "-"}</strong>
+                    <div className="score-panel">
+                      <span>{T.suspiciousScore}</span>
+                      <strong>{scorePercent !== null ? `${scorePercent}%` : "-"}</strong>
                     </div>
                   </div>
 
-                  <div className="info-box">
-                    <p><span>{T.filename}</span><strong>{result.filename || fileName || "-"}</strong></p>
-                    <p><span>{T.confidence}</span><strong>{translateConfidence(result.confidence)}</strong></p>
-                    <p><span>SD</span><strong>{result.model_probs?.sd ?? "-"}</strong></p>
-                    <p><span>MJ</span><strong>{result.model_probs?.mj ?? "-"}</strong></p>
-                    <p><span>BG</span><strong>{result.model_probs?.bg ?? "-"}</strong></p>
-                    <p><span>{T.modelFusion}</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
-                    <p><span>{T.disagreement}</span><strong>{result.signals?.model_disagreement ?? "-"}</strong></p>
-                    {result.grad_cam?.image_base64 && (
-                      <div className="grad-cam-box">
-                        <h3>Grad-CAM</h3>
-                        <img
-                          src={`data:image/png;base64,${result.grad_cam.image_base64}`}
-                          alt={T.heatmap}
-                          className="preview-image"
-                        />
-                        <p>{T.model}: {result.grad_cam.model || "-"}</p>
+                  <button className="detail-btn" onClick={() => setDetailsOpen(true)}>
+                    {T.detailedInfo}
+                  </button>
+
+                  {detailsOpen && (
+                    <div className="modal-backdrop" role="presentation" onClick={() => setDetailsOpen(false)}>
+                      <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="image-details-title" onClick={(event) => event.stopPropagation()}>
+                        <div className="modal-header">
+                          <h3 id="image-details-title">{T.detailedInfo}</h3>
+                          <button className="modal-close" onClick={() => setDetailsOpen(false)} aria-label={T.close}>x</button>
+                        </div>
+
+                        <div className="info-box modal-info">
+                          <p><span>{T.filename}</span><strong>{result.filename || fileName || "-"}</strong></p>
+                          <p><span>{T.confidence}</span><strong>{translateConfidence(result.confidence)}</strong></p>
+                          <p><span>SD</span><strong>{result.model_probs?.sd ?? "-"}</strong></p>
+                          <p><span>MJ</span><strong>{result.model_probs?.mj ?? "-"}</strong></p>
+                          <p><span>BG</span><strong>{result.model_probs?.bg ?? "-"}</strong></p>
+                          <p><span>{T.modelFusion}</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
+                          <p><span>{T.disagreement}</span><strong>{result.signals?.model_disagreement ?? "-"}</strong></p>
+                        </div>
+
+                        {result.grad_cam?.image_base64 && (
+                          <div className="grad-cam-box">
+                            <h3>Grad-CAM</h3>
+                            <img
+                              src={`data:image/png;base64,${result.grad_cam.image_base64}`}
+                              alt={T.heatmap}
+                              className="preview-image"
+                            />
+                            <p>{T.model}: {result.grad_cam.model || "-"}</p>
+                          </div>
+                        )}
+
+                        <div className="correction-box">
+                          <p className="correction-title">{T.correctionTitle}</p>
+                          <div className="button-row">
+                            <button
+                              className="secondary-btn"
+                              onClick={() => handleSaveCorrection("real")}
+                            >
+                              {T.saveReal}
+                            </button>
+                            <button
+                              className="danger-btn"
+                              onClick={() => handleSaveCorrection("fake")}
+                            >
+                              {T.saveAi}
+                            </button>
+                          </div>
+
+                          {saveMessage && <p className="save-message">{saveMessage}</p>}
+                        </div>
                       </div>
-                    )}
-                  </div>
-
-                  <div className="correction-box">
-                    <p className="correction-title">{T.correctionTitle}</p>
-                    <div className="button-row">
-                      <button
-                        className="secondary-btn"
-                        onClick={() => handleSaveCorrection("real")}
-                      >
-                        {T.saveReal}
-                      </button>
-                      <button
-                        className="danger-btn"
-                        onClick={() => handleSaveCorrection("fake")}
-                      >
-                        {T.saveAi}
-                      </button>
                     </div>
-
-                    {saveMessage && <p className="save-message">{saveMessage}</p>}
-                  </div>
+                  )}
                 </>
               )}
             </div>

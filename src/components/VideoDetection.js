@@ -29,6 +29,8 @@ const T = {
   resultTitle: "\ub3d9\uc601\uc0c1 \ubd84\uc11d \uacb0\uacfc",
   error: "\uc624\ub958",
   suspiciousScore: "\uc758\uc2ec \uc810\uc218",
+  detailedInfo: "\uc0c1\uc138 \uc815\ubcf4",
+  close: "\ub2eb\uae30",
   analyzedFrames: "\ubd84\uc11d \ud504\ub808\uc784 \uc218",
   frameScores: "\ud504\ub808\uc784\ubcc4 \uc810\uc218",
 };
@@ -148,6 +150,7 @@ function VideoDetection() {
   const [videoFileName, setVideoFileName] = useState("");
   const [videoLoading, setVideoLoading] = useState(false);
   const [progress, setProgress] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (!videoUrl) return undefined;
@@ -168,6 +171,7 @@ function VideoDetection() {
     setVideoUrl(URL.createObjectURL(file));
     setVideoResult(null);
     setProgress(null);
+    setDetailsOpen(false);
   }, []);
 
   const handleVideoFileChange = (event) => {
@@ -179,6 +183,7 @@ function VideoDetection() {
 
     setVideoLoading(true);
     setVideoResult(null);
+    setDetailsOpen(false);
     setProgress({
       stage: T.preparing,
       detail: T.loadingMetadata,
@@ -225,6 +230,10 @@ function VideoDetection() {
       setVideoLoading(false);
     }
   };
+
+  const scorePercent = videoResult?.suspicious_score !== undefined
+    ? Math.round(videoResult.suspicious_score * 100)
+    : null;
 
   return (
     <>
@@ -280,16 +289,32 @@ function VideoDetection() {
                 <>
                   <div className="result-main">
                     <div className="result-badge">{translateVideoLabel(videoResult.label || videoResult.prediction)}</div>
-                    <div className="result-prob">
-                      {T.suspiciousScore}: <strong>{videoResult.suspicious_score ?? "-"}</strong>
+                    <div className="score-panel">
+                      <span>{T.suspiciousScore}</span>
+                      <strong>{scorePercent !== null ? `${scorePercent}%` : "-"}</strong>
                     </div>
                   </div>
 
-                  <div className="info-box">
-                    <p><span>{T.analyzedFrames}</span><strong>{videoResult.frame_count ?? videoResult.frame_predictions?.length ?? "-"}</strong></p>
-                    <p><span>{T.frameScores}</span><strong>{videoResult.frame_predictions?.join(", ") || "-"}</strong></p>
-                    <p><span>{T.suspiciousScore}</span><strong>{videoResult.suspicious_score ?? "-"}</strong></p>
-                  </div>
+                  <button className="detail-btn" onClick={() => setDetailsOpen(true)}>
+                    {T.detailedInfo}
+                  </button>
+
+                  {detailsOpen && (
+                    <div className="modal-backdrop" role="presentation" onClick={() => setDetailsOpen(false)}>
+                      <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="video-details-title" onClick={(event) => event.stopPropagation()}>
+                        <div className="modal-header">
+                          <h3 id="video-details-title">{T.detailedInfo}</h3>
+                          <button className="modal-close" onClick={() => setDetailsOpen(false)} aria-label={T.close}>x</button>
+                        </div>
+
+                        <div className="info-box modal-info">
+                          <p><span>{T.analyzedFrames}</span><strong>{videoResult.frame_count ?? videoResult.frame_predictions?.length ?? "-"}</strong></p>
+                          <p><span>{T.frameScores}</span><strong>{videoResult.frame_predictions?.join(", ") || "-"}</strong></p>
+                          <p><span>{T.suspiciousScore}</span><strong>{videoResult.suspicious_score ?? "-"}</strong></p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>

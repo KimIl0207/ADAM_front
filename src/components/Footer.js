@@ -10,7 +10,7 @@ function Footer() {
       </div>
 
       <address className="footer-contact">
-        <a href="mailto:contact@example.com">contact@example.com</a>
+        <a href="mailto:so0214n2@gmail.com">so0214n2@gmail.com</a>
         <span>{location}</span>
       </address>
     </footer>
