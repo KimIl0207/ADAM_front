@@ -147,11 +147,7 @@ function VideoDetection() {
 
     try {
       const frames = await extractVideoFrames(selectedVideoFile, setProgress);
-<<<<<<< HEAD
-      const frameProbabilities = [];
-=======
       const frameScores = [];
->>>>>>> 963d0a3 (리턴값 수정)
 
       for (let index = 0; index < frames.length; index += 1) {
         setProgress({
@@ -166,17 +162,6 @@ function VideoDetection() {
           setVideoLoading(false);
           return;
         }
-<<<<<<< HEAD
-        frameProbabilities.push(frameResult.probability);
-      }
-
-      const averageProbability = frameProbabilities.reduce((sum, value) => sum + value, 0) / frameProbabilities.length;
-      setVideoResult({
-        label: averageProbability >= 0.5 ? "AI Generated Video" : "Real Video",
-        probability: Number(averageProbability.toFixed(4)),
-        frame_count: frames.length,
-        frame_predictions: frameProbabilities.map((value) => Number(value.toFixed(4))),
-=======
         frameScores.push(frameResult.suspicious_score);
       }
 
@@ -186,7 +171,6 @@ function VideoDetection() {
         suspicious_score: Number(averageSuspiciousScore.toFixed(4)),
         frame_count: frames.length,
         frame_predictions: frameScores.map((value) => Number(value.toFixed(4))),
->>>>>>> 963d0a3 (리턴값 수정)
       });
       setProgress({
         stage: "Complete",
@@ -257,23 +241,14 @@ function VideoDetection() {
                   <div className="result-main">
                     <div className="result-badge">{videoResult.label || videoResult.prediction}</div>
                     <div className="result-prob">
-<<<<<<< HEAD
-                      Probability: <strong>{videoResult.probability ?? "-"}</strong>
-=======
                       Suspicious Score: <strong>{videoResult.suspicious_score ?? "-"}</strong>
->>>>>>> 963d0a3 (리턴값 수정)
                     </div>
                   </div>
 
                   <div className="info-box">
                     <p><span>Analyzed Frames</span><strong>{videoResult.frame_count ?? videoResult.frame_predictions?.length ?? "-"}</strong></p>
-<<<<<<< HEAD
-                    <p><span>Frame Probabilities</span><strong>{videoResult.frame_predictions?.join(", ") || "-"}</strong></p>
-                    <p><span>Probability</span><strong>{videoResult.probability ?? "-"}</strong></p>
-=======
                     <p><span>Frame Scores</span><strong>{videoResult.frame_predictions?.join(", ") || "-"}</strong></p>
                     <p><span>Suspicious Score</span><strong>{videoResult.suspicious_score ?? "-"}</strong></p>
->>>>>>> 963d0a3 (리턴값 수정)
                   </div>
                 </>
               )}
