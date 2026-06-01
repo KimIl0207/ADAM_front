@@ -15,7 +15,7 @@ function Header({ currentPath, onNavigate }) {
     <header className="site-header">
       <a href="/image" className="brand" aria-label="AI Detector home" onClick={(event) => handleNavigation(event, "/image")}>
         <span className="brand-logo-wrap" aria-hidden="true">
-          <img src="/adam-logo.png" alt="" className="brand-logo" />
+          <img src="/adam-logo-header.png" alt="" className="brand-logo" />
         </span>
         <span className="brand-text">
           <span className="brand-name">ADAM</span>
