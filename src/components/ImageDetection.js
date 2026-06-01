@@ -13,6 +13,8 @@ const T = {
   saved: "\ub85c \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4.",
   saveFailed: "\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.",
   selectImage: "\uc774\ubbf8\uc9c0 \uc120\ud0dd",
+  dropImage: "\uc774\ubbf8\uc9c0\ub97c \ub4dc\ub798\uadf8\ud558\uac70\ub098 \ud074\ub9ad\ud574 \uc120\ud0dd",
+  originalImage: "\uc6d0\ubcf8 \uc774\ubbf8\uc9c0",
   pasteHint: "\ubcf5\uc0ac\ud55c \uc2a4\ud06c\ub9b0\uc0f7\uc774\ub098 \uc774\ubbf8\uc9c0\ub97c Ctrl+V\ub85c \ubd99\uc5ec\ub123\uc744 \uc218\ub3c4 \uc788\uc2b5\ub2c8\ub2e4.",
   analyzing: "\ubd84\uc11d \uc911...",
   uploadAnalyze: "\uc5c5\ub85c\ub4dc \ud6c4 \ubd84\uc11d",
@@ -126,6 +128,19 @@ function ImageDetection() {
     selectImageFile(event.target.files?.[0]);
   };
 
+  const handleDrop = (event) => {
+    event.preventDefault();
+    selectImageFile(event.dataTransfer.files?.[0]);
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleUpload = async () => {
     if (!selectedFile) return;
 
@@ -142,6 +157,9 @@ function ImageDetection() {
   const scorePercent = result?.suspicious_score !== undefined
     ? Math.round(result.suspicious_score * 100)
     : null;
+  const gradCamUrl = result?.grad_cam?.image_base64
+    ? `data:image/png;base64,${result.grad_cam.image_base64}`
+    : null;
 
   const handleSaveCorrection = async (label) => {
     if (!selectedFile) return;
@@ -156,12 +174,31 @@ function ImageDetection() {
   };
 
   return (
-    <>
-      <div className="card upload-card detector-card image-upload-card">
-        <h2>Image Detection</h2>
-        <label htmlFor="fileInput" className="file-label">
-          {T.selectImage}
-        </label>
+    <div className="analysis-layout image-analysis">
+      <div className="card analysis-panel source-panel detector-card image-upload-card">
+        <div className="panel-heading">
+          <span className="eyebrow">{T.originalImage}</span>
+          <h2>Image Detection</h2>
+        </div>
+
+        <div
+          className={`drop-zone ${imageUrl ? "has-preview" : ""}`}
+          role="button"
+          tabIndex={0}
+          onClick={openFilePicker}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") openFilePicker();
+          }}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          {imageUrl ? (
+            <img src={imageUrl} alt={T.uploadedImage} className="analysis-media" />
+          ) : (
+            <span>{T.dropImage}</span>
+          )}
+        </div>
+
         <input
           ref={fileInputRef}
           type="file"
@@ -170,6 +207,7 @@ function ImageDetection() {
           className="file-input"
           onChange={handleFileChange}
         />
+
         <p className="paste-hint">{T.pasteHint}</p>
         {fileName && <p className="file-name">{fileName}</p>}
 
@@ -178,95 +216,76 @@ function ImageDetection() {
         </button>
       </div>
 
-      {(imageUrl || result) && (
-        <div className="content-grid">
-          {imageUrl && (
-            <div className="card preview-card">
-              <h2>{T.preview}</h2>
-              <img src={imageUrl} alt={T.uploadedImage} className="preview-image" />
-            </div>
-          )}
+      <div className="card analysis-panel result-panel">
+        <div className="panel-heading">
+          <span className="eyebrow">Grad-CAM</span>
+          <h2>{T.resultTitle}</h2>
+        </div>
 
-          {result && (
-            <div className="card result-card">
-              <h2>{T.resultTitle}</h2>
-
-              {result.error ? (
-                <p className="error-text">{T.error}: {result.error}</p>
+        {result?.error ? (
+          <p className="error-text">{T.error}: {result.error}</p>
+        ) : (
+          <>
+            <div className={`result-visual ${gradCamUrl ? "has-preview" : ""}`}>
+              {gradCamUrl ? (
+                <img src={gradCamUrl} alt={T.heatmap} className="analysis-media" />
               ) : (
-                <>
-                  <div className="result-main">
-                    <div className="result-badge">{translateImageLabel(result.label)}</div>
-                    <div className="score-panel">
-                      <span>{T.suspiciousScore}</span>
-                      <strong>{scorePercent !== null ? `${scorePercent}%` : "-"}</strong>
-                    </div>
-                  </div>
-
-                  <button className="detail-btn" onClick={() => setDetailsOpen(true)}>
-                    {T.detailedInfo}
-                  </button>
-
-                  {detailsOpen && (
-                    <div className="modal-backdrop" role="presentation" onClick={() => setDetailsOpen(false)}>
-                      <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="image-details-title" onClick={(event) => event.stopPropagation()}>
-                        <div className="modal-header">
-                          <h3 id="image-details-title">{T.detailedInfo}</h3>
-                          <button className="modal-close" onClick={() => setDetailsOpen(false)} aria-label={T.close}>x</button>
-                        </div>
-
-                        <div className="info-box modal-info">
-                          <p><span>{T.filename}</span><strong>{result.filename || fileName || "-"}</strong></p>
-                          <p><span>{T.confidence}</span><strong>{translateConfidence(result.confidence)}</strong></p>
-                          {Object.entries(result.model_probs || {}).map(([modelKey, prob]) => (
-                            <p key={modelKey}><span>{getModelLabel(modelKey)}</span><strong>{prob}</strong></p>
-                          ))}
-                          <p><span>{T.modelFusion}</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
-                          <p><span>{T.disagreement}</span><strong>{result.signals?.model_disagreement ?? "-"}</strong></p>
-                          <p><span>{T.sdxlSpike}</span><strong>{result.signals?.sdxl_spike ? T.detected : T.notDetected}</strong></p>
-                        </div>
-
-                        {result.grad_cam?.image_base64 && (
-                          <div className="grad-cam-box">
-                            <h3>Grad-CAM</h3>
-                            <img
-                              src={`data:image/png;base64,${result.grad_cam.image_base64}`}
-                              alt={T.heatmap}
-                              className="preview-image"
-                            />
-                            <p>{T.model}: {result.grad_cam.model || "-"}</p>
-                          </div>
-                        )}
-
-                        <div className="correction-box">
-                          <p className="correction-title">{T.correctionTitle}</p>
-                          <div className="button-row">
-                            <button
-                              className="secondary-btn"
-                              onClick={() => handleSaveCorrection("real")}
-                            >
-                              {T.saveReal}
-                            </button>
-                            <button
-                              className="danger-btn"
-                              onClick={() => handleSaveCorrection("fake")}
-                            >
-                              {T.saveAi}
-                            </button>
-                          </div>
-
-                          {saveMessage && <p className="save-message">{saveMessage}</p>}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
+                <span>{loading ? T.analyzing : T.heatmap}</span>
               )}
             </div>
-          )}
+
+            <div className="result-main">
+              {result && <div className="result-badge">{translateImageLabel(result.label)}</div>}
+              <div className="score-panel">
+                <span>{T.suspiciousScore}</span>
+                <strong>{scorePercent !== null ? `${scorePercent}%` : "-"}</strong>
+              </div>
+            </div>
+
+            <button className="detail-btn" onClick={() => setDetailsOpen(true)} disabled={!result}>
+              {T.detailedInfo}
+            </button>
+          </>
+        )}
+      </div>
+
+      {detailsOpen && result && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setDetailsOpen(false)}>
+          <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="image-details-title" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h3 id="image-details-title">{T.detailedInfo}</h3>
+              <button className="modal-close" onClick={() => setDetailsOpen(false)} aria-label={T.close}>x</button>
+            </div>
+
+            <div className="info-box modal-info">
+              <p><span>{T.filename}</span><strong>{result.filename || fileName || "-"}</strong></p>
+              <p><span>{T.confidence}</span><strong>{translateConfidence(result.confidence)}</strong></p>
+              {Object.entries(result.model_probs || {}).map(([modelKey, prob]) => (
+                <p key={modelKey}><span>{getModelLabel(modelKey)}</span><strong>{prob}</strong></p>
+              ))}
+              <p><span>{T.modelFusion}</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
+              <p><span>{T.disagreement}</span><strong>{result.signals?.model_disagreement ?? "-"}</strong></p>
+              <p><span>{T.sdxlSpike}</span><strong>{result.signals?.sdxl_spike ? T.detected : T.notDetected}</strong></p>
+              <p><span>{T.model}</span><strong>{result.grad_cam?.model || "-"}</strong></p>
+            </div>
+
+            <div className="correction-box">
+              <p className="correction-title">{T.correctionTitle}</p>
+              <div className="button-row">
+                <button className="secondary-btn" onClick={() => handleSaveCorrection("real")}>
+                  {T.saveReal}
+                </button>
+                <button className="danger-btn" onClick={() => handleSaveCorrection("fake")}>
+                  {T.saveAi}
+                </button>
+              </div>
+
+              {saveMessage && <p className="save-message">{saveMessage}</p>}
+            </div>
+          </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 

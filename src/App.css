@@ -180,13 +180,21 @@ textarea {
   box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
 }
 
+.nav-menu a.is-active {
+  color: #ffffff;
+  background: #101828;
+  border-color: #101828;
+  box-shadow: 0 14px 28px rgba(16, 24, 40, 0.18);
+}
+
+.page-hero,
 .hero-section {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: end;
   gap: 28px;
-  min-height: 270px;
+  min-height: 220px;
   margin-bottom: 28px;
   padding: clamp(30px, 5vw, 56px);
   background:
@@ -199,6 +207,7 @@ textarea {
   overflow: hidden;
 }
 
+.page-hero::after,
 .hero-section::after {
   content: "";
   position: absolute;
@@ -284,6 +293,14 @@ section {
   margin-top: 26px;
 }
 
+.analysis-layout,
+.text-page-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
 .card {
   position: relative;
   background: var(--panel);
@@ -311,6 +328,89 @@ section {
 
 .text-upload-card::before {
   background: linear-gradient(90deg, #0f766e, var(--cyan), var(--blue));
+}
+
+.analysis-panel {
+  display: flex;
+  min-height: 620px;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px;
+  overflow: hidden;
+}
+
+.panel-heading {
+  display: grid;
+  gap: 10px;
+}
+
+.panel-heading .eyebrow {
+  margin-bottom: 0;
+}
+
+.drop-zone,
+.result-visual,
+.video-result-visual,
+.highlighted-text-box {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 360px;
+  border: 2px dashed rgba(37, 99, 235, 0.24);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(236, 254, 255, 0.42)),
+    radial-gradient(circle at 100% 0, rgba(132, 204, 22, 0.14), transparent 32%);
+  color: var(--muted);
+  font-weight: 900;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.drop-zone {
+  cursor: pointer;
+}
+
+.drop-zone:hover {
+  border-color: rgba(37, 99, 235, 0.48);
+  box-shadow: inset 0 0 0 4px rgba(37, 99, 235, 0.06);
+}
+
+.drop-zone.has-preview,
+.result-visual.has-preview {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  border-style: solid;
+  background: #101828;
+}
+
+.analysis-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: 22px;
+}
+
+.result-panel .score-panel {
+  width: 100%;
+}
+
+.video-result-visual {
+  align-content: center;
+  gap: 18px;
+  padding: 22px;
+  border-style: solid;
+}
+
+.detail-btn:disabled {
+  color: #94a3b8;
+  background: rgba(226, 232, 240, 0.72);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .upload-card,
@@ -700,13 +800,9 @@ section {
   align-items: stretch;
 }
 
-.text-card h2 {
-  text-align: center;
-}
-
 .text-input {
   width: 100%;
-  min-height: 210px;
+  min-height: 430px;
   resize: vertical;
   border: 1px solid rgba(16, 24, 40, 0.13);
   border-radius: 20px;
@@ -725,6 +821,40 @@ section {
 
 .text-result {
   margin-top: 4px;
+}
+
+.highlighted-text-box {
+  display: block;
+  min-height: 430px;
+  padding: 20px;
+  overflow: auto;
+  white-space: pre-wrap;
+  text-align: left;
+  color: #172033;
+  font-weight: 650;
+}
+
+.highlighted-text-box mark {
+  padding: 2px 4px;
+  border-radius: 6px;
+  color: #111827;
+}
+
+.highlight-low {
+  background: rgba(250, 204, 21, 0.45);
+}
+
+.highlight-mid {
+  background: rgba(251, 146, 60, 0.58);
+}
+
+.highlight-high {
+  background: rgba(239, 68, 68, 0.64);
+}
+
+.muted-text {
+  color: var(--muted);
+  font-weight: 800;
 }
 
 .highlight-panel {
@@ -838,6 +968,23 @@ section {
 }
 
 @media (max-width: 900px) {
+  .analysis-layout,
+  .text-page-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-panel {
+    min-height: auto;
+  }
+
+  .drop-zone,
+  .result-visual,
+  .video-result-visual,
+  .highlighted-text-box {
+    min-height: 300px;
+  }
+
+  .page-hero,
   .hero-section {
     grid-template-columns: 1fr;
     align-items: start;
@@ -888,6 +1035,12 @@ section {
     border-radius: 24px;
   }
 
+  .page-hero {
+    min-height: auto;
+    padding: 26px 20px;
+    border-radius: 24px;
+  }
+
   .subtitle {
     font-size: 16px;
   }
@@ -899,10 +1052,16 @@ section {
   .upload-card,
   .video-card,
   .text-card,
+  .analysis-panel,
   .preview-card,
   .result-card {
     padding: 22px;
     border-radius: 22px;
+  }
+
+  .text-input,
+  .highlighted-text-box {
+    min-height: 320px;
   }
 
   .button-row {

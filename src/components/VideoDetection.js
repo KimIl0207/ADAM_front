@@ -23,6 +23,8 @@ const T = {
   framesAnalyzed: "\uac1c \ud504\ub808\uc784 \ubd84\uc11d \uc644\ub8cc",
   analysisFailed: "\ub3d9\uc601\uc0c1 \ud504\ub808\uc784 \ubd84\uc11d\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.",
   selectVideo: "\ub3d9\uc601\uc0c1 \uc120\ud0dd",
+  dropVideo: "\ub3d9\uc601\uc0c1\uc744 \ub4dc\ub798\uadf8\ud558\uac70\ub098 \ud074\ub9ad\ud574 \uc120\ud0dd",
+  originalVideo: "\uc6d0\ubcf8 \ub3d9\uc601\uc0c1",
   analyzing: "\ubd84\uc11d \uc911...",
   uploadAnalyze: "\uc5c5\ub85c\ub4dc \ud6c4 \ub3d9\uc601\uc0c1 \ubd84\uc11d",
   preview: "\ub3d9\uc601\uc0c1 \ubbf8\ub9ac\ubcf4\uae30",
@@ -178,6 +180,19 @@ function VideoDetection() {
     selectVideoFile(event.target.files?.[0]);
   };
 
+  const handleDrop = (event) => {
+    event.preventDefault();
+    selectVideoFile(event.dataTransfer.files?.[0]);
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  const openFilePicker = () => {
+    videoInputRef.current?.click();
+  };
+
   const handleVideoUpload = async () => {
     if (!selectedVideoFile) return;
 
@@ -236,12 +251,31 @@ function VideoDetection() {
     : null;
 
   return (
-    <>
-      <div className="card video-card detector-card video-upload-card">
-        <h2>Video Detection</h2>
-        <label htmlFor="videoInput" className="file-label">
-          {T.selectVideo}
-        </label>
+    <div className="analysis-layout video-analysis">
+      <div className="card analysis-panel source-panel detector-card video-upload-card">
+        <div className="panel-heading">
+          <span className="eyebrow">{T.originalVideo}</span>
+          <h2>Video Detection</h2>
+        </div>
+
+        <div
+          className={`drop-zone ${videoUrl ? "has-preview" : ""}`}
+          role="button"
+          tabIndex={0}
+          onClick={openFilePicker}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") openFilePicker();
+          }}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          {videoUrl ? (
+            <video src={videoUrl} className="analysis-media" controls onClick={(event) => event.stopPropagation()} />
+          ) : (
+            <span>{T.dropVideo}</span>
+          )}
+        </div>
+
         <input
           ref={videoInputRef}
           type="file"
@@ -250,6 +284,7 @@ function VideoDetection() {
           className="file-input"
           onChange={handleVideoFileChange}
         />
+
         {videoFileName && <p className="file-name">{videoFileName}</p>}
 
         <button className="primary-btn" onClick={handleVideoUpload} disabled={videoLoading || !selectedVideoFile}>
@@ -270,58 +305,50 @@ function VideoDetection() {
         )}
       </div>
 
-      {(videoUrl || videoResult) && (
-        <div className="content-grid">
-          {videoUrl && (
-            <div className="card preview-card">
-              <h2>{T.preview}</h2>
-              <video src={videoUrl} className="preview-video" controls />
+      <div className="card analysis-panel result-panel">
+        <div className="panel-heading">
+          <span className="eyebrow">Frame Score</span>
+          <h2>{T.resultTitle}</h2>
+        </div>
+
+        {videoResult?.error ? (
+          <p className="error-text">{T.error}: {videoResult.error}</p>
+        ) : (
+          <>
+            <div className="video-result-visual">
+              <div className="result-badge">
+                {videoResult ? translateVideoLabel(videoResult.label || videoResult.prediction) : T.resultTitle}
+              </div>
+              <div className="score-panel">
+                <span>{T.suspiciousScore}</span>
+                <strong>{scorePercent !== null ? `${scorePercent}%` : "-"}</strong>
+              </div>
             </div>
-          )}
 
-          {videoResult && (
-            <div className="card result-card">
-              <h2>{T.resultTitle}</h2>
+            <button className="detail-btn" onClick={() => setDetailsOpen(true)} disabled={!videoResult}>
+              {T.detailedInfo}
+            </button>
+          </>
+        )}
+      </div>
 
-              {videoResult.error ? (
-                <p className="error-text">{T.error}: {videoResult.error}</p>
-              ) : (
-                <>
-                  <div className="result-main">
-                    <div className="result-badge">{translateVideoLabel(videoResult.label || videoResult.prediction)}</div>
-                    <div className="score-panel">
-                      <span>{T.suspiciousScore}</span>
-                      <strong>{scorePercent !== null ? `${scorePercent}%` : "-"}</strong>
-                    </div>
-                  </div>
-
-                  <button className="detail-btn" onClick={() => setDetailsOpen(true)}>
-                    {T.detailedInfo}
-                  </button>
-
-                  {detailsOpen && (
-                    <div className="modal-backdrop" role="presentation" onClick={() => setDetailsOpen(false)}>
-                      <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="video-details-title" onClick={(event) => event.stopPropagation()}>
-                        <div className="modal-header">
-                          <h3 id="video-details-title">{T.detailedInfo}</h3>
-                          <button className="modal-close" onClick={() => setDetailsOpen(false)} aria-label={T.close}>x</button>
-                        </div>
-
-                        <div className="info-box modal-info">
-                          <p><span>{T.analyzedFrames}</span><strong>{videoResult.frame_count ?? videoResult.frame_predictions?.length ?? "-"}</strong></p>
-                          <p><span>{T.frameScores}</span><strong>{videoResult.frame_predictions?.join(", ") || "-"}</strong></p>
-                          <p><span>{T.suspiciousScore}</span><strong>{videoResult.suspicious_score ?? "-"}</strong></p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
+      {detailsOpen && videoResult && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setDetailsOpen(false)}>
+          <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="video-details-title" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h3 id="video-details-title">{T.detailedInfo}</h3>
+              <button className="modal-close" onClick={() => setDetailsOpen(false)} aria-label={T.close}>x</button>
             </div>
-          )}
+
+            <div className="info-box modal-info">
+              <p><span>{T.analyzedFrames}</span><strong>{videoResult.frame_count ?? videoResult.frame_predictions?.length ?? "-"}</strong></p>
+              <p><span>{T.frameScores}</span><strong>{videoResult.frame_predictions?.join(", ") || "-"}</strong></p>
+              <p><span>{T.suspiciousScore}</span><strong>{videoResult.suspicious_score ?? "-"}</strong></p>
+            </div>
+          </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
