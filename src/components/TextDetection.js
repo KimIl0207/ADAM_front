@@ -50,7 +50,9 @@ function TextDetection() {
   const finalAiProb = textResult?.final_ai_prob?.toFixed?.(1);
   const sentenceHighlights = textResult?.sentence_highlights || [];
   const suspiciousHighlights = sentenceHighlights.filter((item) => item.is_ai_like);
-  const orderedHighlights = [...sentenceHighlights].sort((a, b) => a.start - b.start);
+  const orderedHighlights = sentenceHighlights
+    .filter((item) => item.is_ai_like)
+    .sort((a, b) => a.start - b.start);
   const resultLabel = textResult?.decision === "AI"
     ? T.ai
     : textResult?.decision === "Human"
@@ -96,7 +98,7 @@ function TextDetection() {
     <div className="text-page-layout">
       <div className="card text-card detector-card text-upload-card">
         <div className="panel-heading">
-          <span className="eyebrow">\uc6d0\ubb38 \ud14d\uc2a4\ud2b8</span>
+          <span className="eyebrow">원본 텍스트</span>
           <h2>Text Detection</h2>
         </div>
 
