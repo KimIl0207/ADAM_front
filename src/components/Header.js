@@ -4,8 +4,11 @@ function Header() {
   return (
     <header className="site-header">
       <a href="#top" className="brand" aria-label="AI Detector home">
-        <span className="brand-mark">AD</span>
-        <span className="brand-name">AI Detector</span>
+        <span className="brand-mark" aria-hidden="true">AD</span>
+        <span className="brand-text">
+          <span className="brand-name">AI Detector</span>
+          <span className="brand-subtitle">Synthetic Media Lab</span>
+        </span>
       </a>
 
       <nav className="nav-menu" aria-label={primaryNavigation}>

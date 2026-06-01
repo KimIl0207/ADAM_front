@@ -38,7 +38,7 @@ function TextDetection() {
   const finalAiProb = textResult?.final_ai_prob?.toFixed?.(1);
 
   return (
-    <div className="card text-card">
+    <div className="card text-card detector-card text-upload-card">
       <h2>Text Detection</h2>
       <textarea
         className="text-input"

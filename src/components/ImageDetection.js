@@ -157,7 +157,7 @@ function ImageDetection() {
 
   return (
     <>
-      <div className="card upload-card">
+      <div className="card upload-card detector-card image-upload-card">
         <h2>Image Detection</h2>
         <label htmlFor="fileInput" className="file-label">
           {T.selectImage}

@@ -237,7 +237,7 @@ function VideoDetection() {
 
   return (
     <>
-      <div className="card video-card">
+      <div className="card video-card detector-card video-upload-card">
         <h2>Video Detection</h2>
         <label htmlFor="videoInput" className="file-label">
           {T.selectVideo}
