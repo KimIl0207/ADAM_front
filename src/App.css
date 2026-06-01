@@ -125,18 +125,22 @@ textarea {
   font-weight: 900;
 }
 
-.brand-mark {
-  display: inline-grid;
+.brand-logo-wrap {
+  display: grid;
   place-items: center;
-  width: 46px;
+  width: 82px;
   height: 46px;
-  flex: 0 0 46px;
+  flex: 0 0 82px;
+  overflow: hidden;
   border-radius: 16px;
-  background: linear-gradient(135deg, #111827, var(--blue) 54%, var(--cyan));
-  color: #ffffff;
-  font-size: 13px;
-  letter-spacing: 0;
-  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.28);
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.16);
+}
+
+.brand-logo {
+  width: 130px;
+  height: 74px;
+  object-fit: contain;
 }
 
 .brand-text {
