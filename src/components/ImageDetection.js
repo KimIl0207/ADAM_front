@@ -6,9 +6,7 @@ const T = {
   likelyReal: "\uc2e4\uc81c \uc774\ubbf8\uc9c0 \uac00\ub2a5\uc131 \ub192\uc74c",
   aiImage: "\u0041\u0049 \uc0dd\uc131 \uc774\ubbf8\uc9c0",
   realImage: "\uc2e4\uc81c \uc774\ubbf8\uc9c0",
-  high: "\ub192\uc74c",
-  medium: "\ubcf4\ud1b5",
-  low: "\ub0ae\uc74c",
+  trusted: "ADAM \ud310\ub2e8",
   imageOnly: "\uc774\ubbf8\uc9c0 \ud30c\uc77c\ub9cc \uc5c5\ub85c\ub4dc\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
   saved: "\ub85c \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4.",
   saveFailed: "\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.",
@@ -27,9 +25,7 @@ const T = {
   close: "\ub2eb\uae30",
   filename: "\ud30c\uc77c\uba85",
   confidence: "\uc2e0\ub8b0\ub3c4",
-  modelFusion: "\ubaa8\ub378 \ud569\uc131 \uc810\uc218",
-  disagreement: "\ubaa8\ub378 \ubd88\uc77c\uce58\ub3c4",
-  sdxlSpike: "SDXL \uac15\ubc18\uc751",
+  modelFusion: "\ucd5c\uc885 \ud310\ubcc4 \uc810\uc218",
   detected: "\uac10\uc9c0",
   notDetected: "\ubbf8\uac10\uc9c0",
   heatmap: "Grad-CAM \ud788\ud2b8\ub9f5",
@@ -52,9 +48,7 @@ function translateImageLabel(label) {
 
 function translateConfidence(confidence) {
   const labels = {
-    high: T.high,
-    medium: T.medium,
-    low: T.low,
+    "ADAM 판단": T.trusted,
   };
 
   return labels[confidence] || confidence || "-";
@@ -62,12 +56,13 @@ function translateConfidence(confidence) {
 
 function getModelLabel(modelKey) {
   const labels = {
+    merged: "ADAM merged",
     sd: "SD",
     mj: "MJ v6",
     bg: "BG",
     sd3: "SD3",
-    sdxl: "SDXL",
     dalle3: "DALL-E 3",
+    univfd: "UnivFD",
   };
 
   return labels[modelKey] || modelKey;
@@ -264,8 +259,6 @@ function ImageDetection() {
                 <p key={modelKey}><span>{getModelLabel(modelKey)}</span><strong>{prob}</strong></p>
               ))}
               <p><span>{T.modelFusion}</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
-              <p><span>{T.disagreement}</span><strong>{result.signals?.model_disagreement ?? "-"}</strong></p>
-              <p><span>{T.sdxlSpike}</span><strong>{result.signals?.sdxl_spike ? T.detected : T.notDetected}</strong></p>
               <p><span>{T.model}</span><strong>{result.grad_cam?.model || "-"}</strong></p>
             </div>
 
