@@ -13,12 +13,14 @@ const routes = {
     eyebrow: "Grad-CAM Visual Analysis",
     subtitle: "\uc774\ubbf8\uc9c0\ub97c \ub4dc\ub798\uadf8 \uc564 \ub4dc\ub86d\ud558\uace0, \uc6d0\ubcf8\uacfc Grad-CAM \uacb0\uacfc\ub97c \ud55c \ud654\uba74\uc5d0\uc11c \ube44\uad50\ud558\uc138\uc694.",
     component: <ImageDetection />,
+    hideHero: true,
   },
   "/image": {
     title: "Image Detection",
     eyebrow: "Grad-CAM Visual Analysis",
     subtitle: "\uc774\ubbf8\uc9c0\ub97c \ub4dc\ub798\uadf8 \uc564 \ub4dc\ub86d\ud558\uace0, \uc6d0\ubcf8\uacfc Grad-CAM \uacb0\uacfc\ub97c \ud55c \ud654\uba74\uc5d0\uc11c \ube44\uad50\ud558\uc138\uc694.",
     component: <ImageDetection />,
+    hideHero: true,
   },
   "/video": {
     title: "Video Detection",
@@ -63,13 +65,15 @@ function App() {
         <Header currentPath={currentPath === "/" ? "/image" : currentPath} onNavigate={navigate} />
 
         <main>
-          <section className="page-hero" aria-labelledby="page-title">
-            <div className="hero-copy">
-              <span className="eyebrow">{activeRoute.eyebrow}</span>
-              <h1 className="title" id="page-title">{activeRoute.title}</h1>
-              <p className="subtitle">{activeRoute.subtitle}</p>
-            </div>
-          </section>
+          {!activeRoute.hideHero && (
+            <section className="page-hero" aria-labelledby="page-title">
+              <div className="hero-copy">
+                <span className="eyebrow">{activeRoute.eyebrow}</span>
+                <h1 className="title" id="page-title">{activeRoute.title}</h1>
+                <p className="subtitle">{activeRoute.subtitle}</p>
+              </div>
+            </section>
+          )}
 
           <section className="detector-section">
             {activeRoute.component}
