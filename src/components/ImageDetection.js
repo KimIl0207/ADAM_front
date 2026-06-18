@@ -174,7 +174,11 @@ function ImageDetection() {
           translateImageLabel={translateImageLabel}
         />
 
-        <ModelScores loading={loading} modelProbs={result?.model_probs} />
+        <ModelScores
+          fusionModelScores={result?.signals?.fusion_model_scores}
+          loading={loading}
+          modelProbs={result?.model_probs}
+        />
         <AnalysisNarrative result={result} />
         <AnalysisHistory
           fileName={fileName}

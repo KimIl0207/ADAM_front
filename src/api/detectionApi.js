@@ -72,6 +72,7 @@ export async function saveCorrection(file, correctLabel, prediction) {
   appendIfPresent('merged_prob', prediction?.model_probs?.merged);
   appendIfPresent('sd_prob', prediction?.model_probs?.sd);
   appendIfPresent('mj_prob', prediction?.model_probs?.mj);
+  appendIfPresent('mj6_prob', prediction?.model_probs?.mj6);
   appendIfPresent('bg_prob', prediction?.model_probs?.bg);
   appendIfPresent('sd3_prob', prediction?.model_probs?.sd3);
   appendIfPresent('dalle3_prob', prediction?.model_probs?.dalle3);

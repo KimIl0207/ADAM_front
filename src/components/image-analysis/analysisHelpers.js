@@ -6,6 +6,7 @@ export const IMAGE_DECISION_THRESHOLDS = {
 export const MODEL_DESCRIPTIONS = {
   sd: "Stable Diffusion detector response.",
   mj: "Midjourney detector response.",
+  mj6: "Midjourney v6 detector response.",
   bg: "BigGAN detector response.",
   sd3: "Stable Diffusion 3 detector response.",
   sdxl: "SDXL detector response.",
@@ -52,7 +53,8 @@ export function getDecisionSummary(score) {
 export function getModelLabel(modelKey) {
   const labels = {
     sd: "SD",
-    mj: "MJ v6",
+    mj: "MJ",
+    mj6: "MJ v6",
     bg: "BigGAN",
     sd3: "SD3",
     sdxl: "SDXL",
@@ -74,7 +76,7 @@ export function getAnalysisNarrative(result) {
 
   const score = clampScore(result.suspicious_score);
   const decision = getDecisionSummary(score);
-  const modelEntries = Object.entries(result.model_probs || {});
+  const modelEntries = Object.entries(result.signals?.fusion_model_scores || result.model_probs || {});
   const strongestModel = modelEntries.reduce(
     (best, current) => (Number(current[1]) > Number(best?.[1] ?? -1) ? current : best),
     null
