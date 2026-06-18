@@ -56,7 +56,6 @@ function translateConfidence(confidence) {
 
 function getModelLabel(modelKey) {
   const labels = {
-    merged: "ADAM merged",
     sd: "SD",
     mj: "MJ v6",
     bg: "BG",
