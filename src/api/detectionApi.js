@@ -1,13 +1,9 @@
 const IMAGE_BASE_URL = process.env.REACT_APP_IMAGE_BASE_URL || "http://localhost:8000";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const MAX_VIDEO_FILE_SIZE = 100 * 1024 * 1024;
 const ERROR_MESSAGES = {
   imageSize: "\ud30c\uc77c \ud06c\uae30\ub294 10MB\ub97c \ub118\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.",
   imageType: "\uc774\ubbf8\uc9c0 \ud30c\uc77c\ub9cc \uc5c5\ub85c\ub4dc\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
   serverFailed: "\uc11c\ubc84 \uc694\uccad\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.",
-  videoSize: "\ub3d9\uc601\uc0c1 \ud30c\uc77c \ud06c\uae30\ub294 100MB\ub97c \ub118\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.",
-  videoType: "\ub3d9\uc601\uc0c1 \ud30c\uc77c\ub9cc \uc5c5\ub85c\ub4dc\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
-  videoServerFailed: "\ub3d9\uc601\uc0c1 \ubd84\uc11d \uc11c\ubc84 \uc694\uccad\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.",
   frameServerFailed: "\ud504\ub808\uc784 \ubd84\uc11d \uc11c\ubc84 \uc694\uccad\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.",
   textTooShort: "\ud14d\uc2a4\ud2b8\ub294 \ucd5c\uc18c 10\uc790 \uc774\uc0c1 \uc785\ub825\ud574\uc57c \ud569\ub2c8\ub2e4.",
   textServerFailed: "\ud14d\uc2a4\ud2b8 \ubd84\uc11d \uc11c\ubc84 \uc694\uccad\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.",
@@ -42,31 +38,6 @@ export async function fetchPrediction(file) {
   }
 }
 
-export async function fetchVideoPrediction(file) {
-  const videoData = new FormData();
-  videoData.append('file', file);
-
-  if (file.size > MAX_VIDEO_FILE_SIZE) {
-    return { error: ERROR_MESSAGES.videoSize };
-  }
-
-  if (file.type && !file.type.startsWith('video/')) {
-    return { error: ERROR_MESSAGES.videoType };
-  }
-
-  try {
-    const response = await fetch(`${IMAGE_BASE_URL}/predict-video`, {
-      method: 'POST',
-      body: videoData,
-    });
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error uploading video:', error);
-    return { error: ERROR_MESSAGES.videoServerFailed };
-  }
-}
-
 export async function fetchFramePrediction(file) {
   const imageData = new FormData();
   imageData.append('file', file);
@@ -98,9 +69,13 @@ export async function saveCorrection(file, correctLabel, prediction) {
   appendIfPresent('predicted_label', prediction?.label);
   appendIfPresent('predicted_probability', prediction?.suspicious_score);
   appendIfPresent('selected_generator_model', prediction?.grad_cam?.model);
+  appendIfPresent('merged_prob', prediction?.model_probs?.merged);
   appendIfPresent('sd_prob', prediction?.model_probs?.sd);
   appendIfPresent('mj_prob', prediction?.model_probs?.mj);
   appendIfPresent('bg_prob', prediction?.model_probs?.bg);
+  appendIfPresent('sd3_prob', prediction?.model_probs?.sd3);
+  appendIfPresent('dalle3_prob', prediction?.model_probs?.dalle3);
+  appendIfPresent('univfd_prob', prediction?.model_probs?.univfd);
 
   try {
     const response = await fetch(`${IMAGE_BASE_URL}/save-correction`, {
