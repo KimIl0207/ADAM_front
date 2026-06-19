@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchPrediction, saveCorrection } from '../api/detectionApi';
 import AnalysisHistory from './image-analysis/AnalysisHistory';
 import AnalysisNarrative from './image-analysis/AnalysisNarrative';
+import FocusAnalysis from './image-analysis/FocusAnalysis';
 import ImageUploadPanel from './image-analysis/ImageUploadPanel';
 import ModelScores from './image-analysis/ModelScores';
 import ResultSummary from './image-analysis/ResultSummary';
@@ -31,18 +32,6 @@ const T = {
   filename: "\ud30c\uc77c\uba85",
   confidence: "\uc2e0\ub8b0\ub3c4",
   modelFusion: "\ucd5c\uc885 \ud310\ubcc4 \uc810\uc218",
-  focusSummary: "AI \ubc18\uc751 \ubc94\uc704",
-  focusStage: "\ud788\ud2b8\ub9f5 \ubd84\ud3ec",
-  faceRegion: "\uc5bc\uad74 \uc601\uc5ed",
-  bodyRegion: "\ubab8/\uc778\ubb3c \uc601\uc5ed",
-  backgroundRegion: "\ubc30\uacbd \uc601\uc5ed",
-  otherRegion: "\uae30\ud0c0 \uc601\uc5ed",
-  localizedRegion: "\uad6d\uc18c \uc601\uc5ed",
-  personDetected: "\uc0ac\ub78c \uc601\uc5ed",
-  diffuse: "\uc804\uccb4 \ubc18\uc751",
-  localized: "\uad6d\uc18c \ubc18\uc751",
-  personRegions: "\uc0ac\ub78c \uc601\uc5ed \ubd84\uc11d",
-  emptyFocus: "\ubc94\uc704 \ud310\ub2e8 \uc5b4\ub824\uc6c0",
   detected: "\uac10\uc9c0",
   notDetected: "\ubbf8\uac10\uc9c0",
   heatmap: "Grad-CAM \ud788\ud2b8\ub9f5",
@@ -69,51 +58,6 @@ function translateConfidence(confidence) {
   };
 
   return labels[confidence] || confidence || "-";
-}
-
-function getModelLabel(modelKey) {
-  const labels = {
-    sd: "SD",
-    mj: "MJ v6",
-    mj6: "MJ v6 tuned",
-    bg: "BG",
-    sd3: "SD3",
-    dalle3: "DALL-E 3",
-    univfd: "UnivFD",
-  };
-
-  return labels[modelKey] || modelKey;
-}
-
-function translateFocusStage(stage) {
-  const labels = {
-    diffuse: T.diffuse,
-    localized: T.localized,
-    person_regions: T.personRegions,
-    empty: T.emptyFocus,
-  };
-
-  return labels[stage] || stage || "-";
-}
-
-function getRegionLabel(regionKey) {
-  const labels = {
-    face: T.faceRegion,
-    body: T.bodyRegion,
-    background: T.backgroundRegion,
-    other: T.otherRegion,
-    localized: T.localizedRegion,
-  };
-
-  return labels[regionKey] || regionKey;
-}
-
-function formatRatio(value) {
-  if (value === undefined || value === null || Number.isNaN(Number(value))) {
-    return "-";
-  }
-
-  return `${Math.round(Number(value) * 100)}%`;
 }
 
 function ImageDetection() {
@@ -214,13 +158,6 @@ function ImageDetection() {
     }
   };
 
-  const scorePercent = result?.suspicious_score !== undefined
-    ? Math.round(result.suspicious_score * 100)
-    : null;
-  const gradCamUrl = result?.grad_cam?.image_base64
-    ? `data:image/png;base64,${result.grad_cam.image_base64}`
-    : null;
-
   return (
     <div className="image-dashboard">
       <section className="image-hero" aria-labelledby="image-hero-title">
@@ -268,6 +205,7 @@ function ImageDetection() {
           modelProbs={result?.model_probs}
         />
         <AnalysisNarrative result={result} />
+        <FocusAnalysis focus={focus} loading={loading} />
         <AnalysisHistory
           fileName={fileName}
           result={result}
@@ -275,84 +213,6 @@ function ImageDetection() {
           onSaveCorrection={handleSaveCorrection}
         />
       </div>
-
-      <div className="card analysis-panel result-panel">
-        <div className="panel-heading">
-          <span className="eyebrow">Grad-CAM</span>
-          <h2>{T.resultTitle}</h2>
-        </div>
-
-        {result?.error ? (
-          <p className="error-text">{T.error}: {result.error}</p>
-        ) : (
-          <>
-            <div className={`result-visual ${gradCamUrl ? "has-preview" : ""}`}>
-              {gradCamUrl ? (
-                <img src={gradCamUrl} alt={T.heatmap} className="analysis-media" />
-              ) : (
-                <span>{loading ? T.analyzing : T.heatmap}</span>
-              )}
-            </div>
-
-            <div className="result-main">
-              {result && <div className="result-badge">{translateImageLabel(result.label)}</div>}
-              <div className="score-panel">
-                <span>{T.suspiciousScore}</span>
-                <strong>{scorePercent !== null ? `${scorePercent}%` : "-"}</strong>
-              </div>
-            </div>
-
-            <button className="detail-btn" onClick={() => setDetailsOpen(true)} disabled={!result}>
-              {T.detailedInfo}
-            </button>
-          </>
-        )}
-      </div>
-
-      {detailsOpen && result && (
-        <div className="modal-backdrop" role="presentation" onClick={() => setDetailsOpen(false)}>
-          <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="image-details-title" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
-              <h3 id="image-details-title">{T.detailedInfo}</h3>
-              <button className="modal-close" onClick={() => setDetailsOpen(false)} aria-label={T.close}>x</button>
-            </div>
-
-            <div className="info-box modal-info">
-              <p><span>{T.filename}</span><strong>{result.filename || fileName || "-"}</strong></p>
-              <p><span>{T.confidence}</span><strong>{translateConfidence(result.confidence)}</strong></p>
-              {Object.entries(result.model_probs || {}).map(([modelKey, prob]) => (
-                <p key={modelKey}><span>{getModelLabel(modelKey)}</span><strong>{prob}</strong></p>
-              ))}
-              <p><span>{T.modelFusion}</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
-              <p><span>{T.model}</span><strong>{result.grad_cam?.model || "-"}</strong></p>
-              {focus && (
-                <>
-                  <p><span>{T.focusSummary}</span><strong>{focus.interpretation || "-"}</strong></p>
-                  <p><span>{T.focusStage}</span><strong>{translateFocusStage(focus.stage)}</strong></p>
-                  <p><span>{T.personDetected}</span><strong>{focus.person_detected ? T.detected : T.notDetected}</strong></p>
-                  {Object.entries(focus.region_scores || {}).map(([regionKey, ratio]) => (
-                    <p key={regionKey}><span>{getRegionLabel(regionKey)}</span><strong>{formatRatio(ratio)}</strong></p>
-                  ))}
-                </>
-              )}
-            </div>
-
-            <div className="correction-box">
-              <p className="correction-title">{T.correctionTitle}</p>
-              <div className="button-row">
-                <button className="secondary-btn" onClick={() => handleSaveCorrection("real")}>
-                  {T.saveReal}
-                </button>
-                <button className="danger-btn" onClick={() => handleSaveCorrection("fake")}>
-                  {T.saveAi}
-                </button>
-              </div>
-
-              {saveMessage && <p className="save-message">{saveMessage}</p>}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
