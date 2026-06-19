@@ -5,7 +5,7 @@ function Footer() {
   return (
     <footer className="site-footer">
       <div>
-        <strong>AI Detector</strong>
+        <strong>ADAM</strong>
         <p>{description}</p>
       </div>
 

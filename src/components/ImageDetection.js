@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchPrediction, saveCorrection } from '../api/detectionApi';
+import AnalysisHistory from './image-analysis/AnalysisHistory';
+import AnalysisNarrative from './image-analysis/AnalysisNarrative';
+import ImageUploadPanel from './image-analysis/ImageUploadPanel';
+import ModelScores from './image-analysis/ModelScores';
+import ResultSummary from './image-analysis/ResultSummary';
 
 const T = {
   aiSuspicious: "\u0041\u0049 \uc0dd\uc131 \uc758\uc2ec \uc774\ubbf8\uc9c0",
@@ -119,7 +124,6 @@ function ImageDetection() {
   const [saveMessage, setSaveMessage] = useState("");
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (!imageUrl) return undefined;
@@ -140,7 +144,6 @@ function ImageDetection() {
     setImageUrl(URL.createObjectURL(file));
     setSaveMessage("");
     setResult(null);
-    setDetailsOpen(false);
   }, []);
 
   useEffect(() => {
@@ -185,7 +188,6 @@ function ImageDetection() {
     setSaveMessage("");
     setLoading(true);
     setResult(null);
-    setDetailsOpen(false);
 
     const data = await fetchPrediction(selectedFile);
     setResult(data);
@@ -201,7 +203,7 @@ function ImageDetection() {
   const focus = result?.grad_cam?.focus;
 
   const handleSaveCorrection = async (label) => {
-    if (!selectedFile) return;
+    if (!selectedFile || !result) return;
 
     const data = await saveCorrection(selectedFile, label, result);
 
@@ -212,47 +214,66 @@ function ImageDetection() {
     }
   };
 
+  const scorePercent = result?.suspicious_score !== undefined
+    ? Math.round(result.suspicious_score * 100)
+    : null;
+  const gradCamUrl = result?.grad_cam?.image_base64
+    ? `data:image/png;base64,${result.grad_cam.image_base64}`
+    : null;
+
   return (
-    <div className="analysis-layout image-analysis">
-      <div className="card analysis-panel source-panel detector-card image-upload-card">
-        <div className="panel-heading">
-          <span className="eyebrow">{T.originalImage}</span>
-          <h2>Image Detection</h2>
+    <div className="image-dashboard">
+      <section className="image-hero" aria-labelledby="image-hero-title">
+        <div className="image-hero-copy">
+          <span className="image-kicker">AI Image Detection System</span>
+          <h1 id="image-hero-title">ADAM</h1>
+          <p>
+            업로드한 이미지를 여러 판별 모델로 분석하고, 종합 AI 가능성 점수와 모델별 근거를 대시보드 형태로 제공합니다.
+          </p>
         </div>
 
-        <div
-          className={`drop-zone ${imageUrl ? "has-preview" : ""}`}
-          role="button"
-          tabIndex={0}
-          onClick={openFilePicker}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") openFilePicker();
-          }}
+        <div className="flow-panel" aria-label="Image analysis flow">
+          <div><span>01</span><strong>Upload</strong><small>이미지 선택</small></div>
+          <div><span>02</span><strong>Analyze</strong><small>모델 앙상블</small></div>
+          <div><span>03</span><strong>Explain</strong><small>점수와 근거 확인</small></div>
+        </div>
+      </section>
+
+      <div className="image-dashboard-grid">
+        <ImageUploadPanel
+          fileInputRef={fileInputRef}
+          fileName={fileName}
+          imageUrl={imageUrl}
+          loading={loading}
+          selectedFile={selectedFile}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-        >
-          {imageUrl ? (
-            <img src={imageUrl} alt={T.uploadedImage} className="analysis-media" />
-          ) : (
-            <span>{T.dropImage}</span>
-          )}
-        </div>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          id="fileInput"
-          accept="image/*"
-          className="file-input"
-          onChange={handleFileChange}
+          onFileChange={handleFileChange}
+          onOpenFilePicker={openFilePicker}
+          onUpload={handleUpload}
         />
 
-        <p className="paste-hint">{T.pasteHint}</p>
-        {fileName && <p className="file-name">{fileName}</p>}
+        <ResultSummary
+          gradCamUrl={gradCamUrl}
+          loading={loading}
+          result={result}
+          scorePercent={scorePercent}
+          translateConfidence={translateConfidence}
+          translateImageLabel={translateImageLabel}
+        />
 
-        <button className="primary-btn" onClick={handleUpload} disabled={loading || !selectedFile}>
-          {loading ? T.analyzing : T.uploadAnalyze}
-        </button>
+        <ModelScores
+          fusionModelScores={result?.signals?.fusion_model_scores}
+          loading={loading}
+          modelProbs={result?.model_probs}
+        />
+        <AnalysisNarrative result={result} />
+        <AnalysisHistory
+          fileName={fileName}
+          result={result}
+          saveMessage={saveMessage}
+          onSaveCorrection={handleSaveCorrection}
+        />
       </div>
 
       <div className="card analysis-panel result-panel">
