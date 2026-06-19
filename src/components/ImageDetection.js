@@ -26,6 +26,18 @@ const T = {
   filename: "\ud30c\uc77c\uba85",
   confidence: "\uc2e0\ub8b0\ub3c4",
   modelFusion: "\ucd5c\uc885 \ud310\ubcc4 \uc810\uc218",
+  focusSummary: "AI \ubc18\uc751 \ubc94\uc704",
+  focusStage: "\ud788\ud2b8\ub9f5 \ubd84\ud3ec",
+  faceRegion: "\uc5bc\uad74 \uc601\uc5ed",
+  bodyRegion: "\ubab8/\uc778\ubb3c \uc601\uc5ed",
+  backgroundRegion: "\ubc30\uacbd \uc601\uc5ed",
+  otherRegion: "\uae30\ud0c0 \uc601\uc5ed",
+  localizedRegion: "\uad6d\uc18c \uc601\uc5ed",
+  personDetected: "\uc0ac\ub78c \uc601\uc5ed",
+  diffuse: "\uc804\uccb4 \ubc18\uc751",
+  localized: "\uad6d\uc18c \ubc18\uc751",
+  personRegions: "\uc0ac\ub78c \uc601\uc5ed \ubd84\uc11d",
+  emptyFocus: "\ubc94\uc704 \ud310\ub2e8 \uc5b4\ub824\uc6c0",
   detected: "\uac10\uc9c0",
   notDetected: "\ubbf8\uac10\uc9c0",
   heatmap: "Grad-CAM \ud788\ud2b8\ub9f5",
@@ -58,6 +70,7 @@ function getModelLabel(modelKey) {
   const labels = {
     sd: "SD",
     mj: "MJ v6",
+    mj6: "MJ v6 tuned",
     bg: "BG",
     sd3: "SD3",
     dalle3: "DALL-E 3",
@@ -65,6 +78,37 @@ function getModelLabel(modelKey) {
   };
 
   return labels[modelKey] || modelKey;
+}
+
+function translateFocusStage(stage) {
+  const labels = {
+    diffuse: T.diffuse,
+    localized: T.localized,
+    person_regions: T.personRegions,
+    empty: T.emptyFocus,
+  };
+
+  return labels[stage] || stage || "-";
+}
+
+function getRegionLabel(regionKey) {
+  const labels = {
+    face: T.faceRegion,
+    body: T.bodyRegion,
+    background: T.backgroundRegion,
+    other: T.otherRegion,
+    localized: T.localizedRegion,
+  };
+
+  return labels[regionKey] || regionKey;
+}
+
+function formatRatio(value) {
+  if (value === undefined || value === null || Number.isNaN(Number(value))) {
+    return "-";
+  }
+
+  return `${Math.round(Number(value) * 100)}%`;
 }
 
 function ImageDetection() {
@@ -154,6 +198,7 @@ function ImageDetection() {
   const gradCamUrl = result?.grad_cam?.image_base64
     ? `data:image/png;base64,${result.grad_cam.image_base64}`
     : null;
+  const focus = result?.grad_cam?.focus;
 
   const handleSaveCorrection = async (label) => {
     if (!selectedFile) return;
@@ -259,6 +304,16 @@ function ImageDetection() {
               ))}
               <p><span>{T.modelFusion}</span><strong>{result.signals?.model_fusion ?? "-"}</strong></p>
               <p><span>{T.model}</span><strong>{result.grad_cam?.model || "-"}</strong></p>
+              {focus && (
+                <>
+                  <p><span>{T.focusSummary}</span><strong>{focus.interpretation || "-"}</strong></p>
+                  <p><span>{T.focusStage}</span><strong>{translateFocusStage(focus.stage)}</strong></p>
+                  <p><span>{T.personDetected}</span><strong>{focus.person_detected ? T.detected : T.notDetected}</strong></p>
+                  {Object.entries(focus.region_scores || {}).map(([regionKey, ratio]) => (
+                    <p key={regionKey}><span>{getRegionLabel(regionKey)}</span><strong>{formatRatio(ratio)}</strong></p>
+                  ))}
+                </>
+              )}
             </div>
 
             <div className="correction-box">
